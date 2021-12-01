@@ -14,7 +14,7 @@ let part1 (values : int List) =
 
 let part2 (values : int List) =
     List.windowed 3 values
-        |> List.map(fun(window) -> List.sum window)
+        |> List.map(List.sum)
         |> part1
 
 
@@ -22,7 +22,7 @@ let part2 (values : int List) =
 let main argv =
     let values = 
         File.ReadLines(argv.[0])
-        |> Seq.map(fun(o) -> o |> int)
+        |> Seq.map(int)
         |> Seq.toList
     printfn "Part 1: %d" (part1 values)
     printfn "Part 2: %d" (part2 values)
