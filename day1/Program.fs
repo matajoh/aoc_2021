@@ -24,6 +24,6 @@ let main argv =
         File.ReadLines(argv.[0])
         |> Seq.map(int)
         |> Seq.toList
-    printfn "Part 1: %d" (part1 values)
-    printfn "Part 2: %d" (part2 values)
+    printfn "Part 1: %i" (part1 values)
+    printfn "Part 2: %i" (part2 values)
     0
