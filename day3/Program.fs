@@ -124,13 +124,13 @@ let part2 report =
 
 [<EntryPoint>]
 let main argv =
-    let diagnostics = 
+    let report = 
         File.ReadLines(argv.[0])
         |> Seq.map(toBits)
         |> Seq.toList
 
 
-    printfn "Part 1: %d" (part1 diagnostics)
-    printfn "Part 2: %d" (part2 diagnostics)
+    printfn "Part 1: %d" (part1 report)
+    printfn "Part 2: %d" (part2 report)
 
     0
