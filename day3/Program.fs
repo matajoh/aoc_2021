@@ -19,23 +19,11 @@ let toBit char =
     | _ -> None
 
 
-let toBits (line : String) =
+let toBits line =
     line
     |> Seq.map toBit
     |> Seq.map Option.get
     |> Seq.toList
-
-
-let maxBit (bitCounts : ((int * Bit) * int) list) =
-    bitCounts
-    |> List.maxBy (fun ((_, _), count) -> count)
-    |> fun ((_, bit), _) -> bit
-
-
-let flipBit bit =
-    match bit with
-    | Zero -> One
-    | One -> Zero
 
 
 let addBit value bit =
@@ -49,26 +37,30 @@ let bitsToInt bits =
     |> List.fold addBit 0
 
 
+let toSign bit =
+    match bit with
+    | Zero -> -1
+    | One -> 1
+
+
+let testBits sums bits =
+    List.zip sums (List.map toSign bits)
+    |> List.map (fun (a, b) -> a + b)
+
+
 let part1 report =
-    let bitCounts =
-        report
-        |> List.map List.indexed
-        |> List.concat
-        |> List.countBy (fun o -> o)
+    let initTest = (List.map toSign (List.head report))
+    let bitTest = List.fold testBits initTest (List.tail report)
 
-    let epsilonBits =
-        bitCounts
-        |> List.groupBy (fun ((index, _),  _) -> index)
-        |> List.map (fun (index, bitList) -> index, maxBit bitList)
-        |> List.sortBy fst
-        |> List.map snd
+    let epsilonRate =
+        bitTest
+        |> List.map (fun test -> if test > 0 then One else Zero)
+        |> bitsToInt
 
-    let gammaBits =
-        epsilonBits
-        |> List.map flipBit
-
-    let epsilonRate = bitsToInt epsilonBits
-    let gammaRate = bitsToInt gammaBits
+    let gammaRate =
+        bitTest
+        |> List.map (fun test -> if test > 0 then Zero else One)
+        |> bitsToInt
 
     epsilonRate * gammaRate
 
