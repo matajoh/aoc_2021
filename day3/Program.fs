@@ -23,7 +23,6 @@ let toBits (line : String) =
     line
     |> Seq.map toBit
     |> Seq.map Option.get
-    |> Seq.indexed
     |> Seq.toList
 
 
@@ -33,10 +32,10 @@ let maxBit (bitCounts : ((int * Bit) * int) list) =
     |> fun ((_, bit), _) -> bit
 
 
-let flipBit (index,  bit) =
+let flipBit bit =
     match bit with
-    | Zero -> index, One
-    | One -> index, Zero
+    | Zero -> One
+    | One -> Zero
 
 
 let addBit value bit =
@@ -47,14 +46,13 @@ let addBit value bit =
 
 let bitsToInt bits =
     bits
-    |> List.sortBy fst
-    |> List.map snd
     |> List.fold addBit 0
 
 
 let part1 report =
     let bitCounts =
         report
+        |> List.map List.indexed
         |> List.concat
         |> List.countBy (fun o -> o)
 
@@ -62,6 +60,8 @@ let part1 report =
         bitCounts
         |> List.groupBy (fun ((index, _),  _) -> index)
         |> List.map (fun (index, bitList) -> index, maxBit bitList)
+        |> List.sortBy fst
+        |> List.map snd
 
     let gammaBits =
         epsilonBits
@@ -73,11 +73,10 @@ let part1 report =
     epsilonRate * gammaRate
 
 
-let filterReportByBit selector index (report : (int * Bit) list list) =
+let filterReportByBit selector index (report : Bit list list) =
     let bitCounts =
         report
-        |> List.map (List.filter (fun o -> fst o = index))
-        |> List.map (fun o -> snd o.Head)
+        |> List.map (fun o -> o.[index])
         |> List.countBy (fun o -> o)
         |> Map.ofList
 
@@ -91,16 +90,16 @@ let filterReportByBit selector index (report : (int * Bit) list list) =
                             One
         | LeastCommon -> if bitCounts.[Zero] < bitCounts.[One] then
                             Zero
-                         else if bitCounts.[One] < bitCounts[Zero] then
+                         else if bitCounts.[One] < bitCounts.[Zero] then
                             One
                          else
                             Zero
         
     report
-    |> List.filter (fun o -> snd o.[index] = filterBit)
+    |> List.filter (fun o -> o.[index] = filterBit)
 
 
-let rec filterReport selector index (report : (int * Bit) list list) =
+let rec filterReport selector index (report : Bit list list) =
     match report.Length with
     | 1 -> report.Head
     | _ -> report
