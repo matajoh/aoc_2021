@@ -21,7 +21,7 @@ let prependRow (row, squares) =
     |> List.map (fun (col, value) -> (row, col, value))
 
 
-let toBoard (lines : String list) =
+let toBoard lines =
     lines
     |> List.skip 1
     |> List.map toSquares
@@ -42,8 +42,8 @@ let markSquare mark (row, col, square) =
     | _ -> (row, col, square)
 
 
-let markBoard value board = board |> List.map (markSquare value)
-let markBoards value boards = boards |> List.map (markBoard value)
+let markBoards value boards =
+    boards |> List.map (List.map (markSquare value))
 
 
 let markToInt mark =
@@ -97,7 +97,7 @@ let rec part1 boards (numbers : int list) =
     let winners = newBoards |> List.filter winningBoard
 
     match winners with
-    | [ ] -> part1 (markBoards numbers.Head boards) numbers.Tail
+    | [ ] -> part1 newBoards numbers.Tail
     | _ -> (List.sumBy unmarkedValue winners.Head) * numbers.Head
 
 
