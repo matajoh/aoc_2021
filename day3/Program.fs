@@ -69,7 +69,7 @@ let filterReportByBit selector index (report : Bit list list) =
     let bitCounts =
         report
         |> List.map (fun o -> o.[index])
-        |> List.countBy (fun o -> o)
+        |> List.countBy id
         |> Map.ofList
 
     let filterBit =

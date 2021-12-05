@@ -13,12 +13,11 @@ let toSquares (line : String) =
     |> Array.map int
     |> Array.toList
     |> List.map Unmarked
-    |> List.indexed
 
 
 let prependRow (row, squares) =
     squares
-    |> List.map (fun (col, value) -> (row, col, value))
+    |> List.mapi (fun col value -> (row, col, value))
 
 
 let toBoard lines =
