@@ -15,8 +15,7 @@ let toSquares (line : string) =
 
 
 let prependRow (row, squares) =
-    squares
-    |> List.mapi (fun col value -> (row, col, value))
+    List.mapi (fun col value -> (row, col, value)) squares
 
 
 let toBoard lines =
@@ -24,8 +23,7 @@ let toBoard lines =
     |> List.skip 1
     |> List.map toSquares
     |> List.indexed
-    |> List.map prependRow
-    |> List.concat
+    |> List.collect prependRow
 
 
 let rec toBoards lines =

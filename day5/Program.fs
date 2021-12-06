@@ -55,10 +55,9 @@ let toVent (line : string) =
 
 let countIntersections includeDiag vents =
     vents
-    |> List.map (getPoints includeDiag) 
-    |> List.concat
-    |> List.countBy id
-    |> List.sumBy (fun (_, count) -> if count > 1 then 1 else 0)
+    |> Seq.collect (getPoints includeDiag)
+    |> Seq.countBy id
+    |> Seq.sumBy (fun (_, count) -> if count > 1 then 1 else 0)
 
 
 [<EntryPoint>]
