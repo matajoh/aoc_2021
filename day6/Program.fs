@@ -24,9 +24,6 @@ let rec simulate numDays fish =
         simulate (numDays - 1) (grow fish)   
 
 
-let setCount fish (i, count) = Array.set fish i count
-
-
 [<EntryPoint>]
 let main argv =
     let fish : uint64 array = Array.zeroCreate 9
