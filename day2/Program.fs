@@ -1,4 +1,3 @@
-open System
 open System.IO
 
 type Command =
@@ -10,7 +9,7 @@ type Command =
 type Position = { x: int; z: int; aim: int }
 
 
-let parseCommand (parts: String array) =
+let parseCommand (parts: string array) =
     let units = parts.[1] |> int
     match parts.[0] with
     | "forward" -> Some (Forward(units))

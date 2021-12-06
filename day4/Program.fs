@@ -1,4 +1,3 @@
-open System
 open System.IO
 
 
@@ -7,7 +6,7 @@ type Square =
     | Unmarked of value: int
 
 
-let toSquares (line : String) =
+let toSquares (line : string) =
     line.Split ' '
     |> Array.filter (fun s -> s.Length > 0)
     |> Array.map int

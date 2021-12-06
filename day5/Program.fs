@@ -1,4 +1,3 @@
-open System
 open System.IO
 
 
@@ -43,7 +42,7 @@ let diagonal x0 x1 y0 y1 =
     |> Diagonal
 
 
-let toVent (line : String) =
+let toVent (line : string) =
     let parts = line.Split ' '
     let (x0, y0) = parts.[0].Split ',' |> Array.map int |> toPoint
     let (x1, y1) = parts.[2].Split ',' |> Array.map int |> toPoint
