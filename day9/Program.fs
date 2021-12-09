@@ -80,7 +80,7 @@ let part2 depths =
     |> Seq.map (measureBasinSize depths)
     |> Seq.sortDescending
     |> Seq.take 3
-    |> Seq.fold (fun prod a -> prod * a) 1
+    |> Seq.fold (*) 1
 
 
 [<EntryPoint>]
