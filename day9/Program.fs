@@ -55,21 +55,24 @@ let isInBasin depths queryDepth point =
     | _ -> false
 
 
+let validNeighbors basin depths (row, col) =
+    let depth = Array2D.get depths row col
+    neighbors row col
+    |> List.filter (fun p -> not (Set.contains p basin))
+    |> List.filter (isInBasin depths depth)
+
+
+let rec fillBasin frontier basin depths =
+    match frontier with
+    | [] -> basin
+    | head :: tail ->
+        let newFrontier = (validNeighbors basin depths head) @ tail
+        let newBasin = Set.add head basin
+        fillBasin newFrontier newBasin depths
+
+
 let measureBasinSize depths bottom =
-    let mutable basin = Set.ofList []
-    let mutable frontier = [bottom]
-    while List.length frontier > 0 do
-        let (row, col) = List.head frontier
-        basin <- Set.add (row, col) basin
-        let depth = Array2D.get depths row col
-        let newPoints =
-            neighbors row col
-            |> List.filter (fun p -> not (Set.contains p basin))
-            |> List.filter (isInBasin depths depth)
-
-        frontier <- newPoints @ List.tail frontier
-
-    Set.count basin
+    fillBasin [bottom] Set.empty depths |> Set.count
 
 
 let part2 depths =
