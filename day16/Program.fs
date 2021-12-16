@@ -48,40 +48,65 @@ let toPacketType typeID =
     | _ -> None
 
 
-let rec toInt bits value =
+let rec toInt value bits =
     match bits with
     | [] -> value
-    | On :: tail -> toInt tail (value * 2 + 1)
-    | Off :: tail -> toInt tail (value * 2)
+    | On :: tail -> toInt (value * 2 + 1) tail
+    | Off :: tail -> toInt (value * 2) tail
 
 
-let rec toUInt64 bits value =
+let rec toUInt64 value bits =
     match bits with
     | [] -> value
-    | On :: tail -> toUInt64 tail (value * 2UL + 1UL)
-    | Off :: tail -> toUInt64 tail (value * 2UL)
+    | On :: tail -> toUInt64 (value * 2UL + 1UL) tail
+    | Off :: tail -> toUInt64 (value * 2UL) tail
 
 
 type Packet =
     | LiteralPacket of version: int * value: uint64
     | OperatorPacket of version: int * op : PacketType * packets : Packet list
 
+[<Literal>]
+let LiteralLength = 4
 
 let rec parseLiteral bits literal =
     match bits with
-    | [] -> toUInt64 literal 0UL, []
-    | On :: tail -> parseLiteral (List.skip 4 tail) (literal @ (List.take 4 tail))
+    | [] -> literal |> toUInt64 0UL, []
+    | On :: tail ->
+        let remaining = List.skip LiteralLength tail
+        let literalBits = List.take LiteralLength tail
+        parseLiteral remaining (literal @ literalBits)
     | Off :: tail ->
-        let value = toUInt64 (literal @ List.take 4 tail) 0UL
-        let remaining = List.skip 4 tail
+        let remaining = List.skip LiteralLength tail
+        let value =
+            literal @ List.take LiteralLength tail
+            |> toUInt64 0UL
         value, remaining
+
+
+[<Literal>]
+let VersionLength = 3
+
+[<Literal>]
+let TypeLength = 3
+
+[<Literal>]
+let NumPacketsLength = 11
+
+[<Literal>]
+let NumBitsLength = 15
 
 
 let rec parsePacket bits parsePackets =
     if List.length bits > 7 then
-        let version = toInt (List.take 3 bits) 0
-        let packetType = toInt (List.take 3 (List.skip 3 bits)) 0 |> toPacketType
-        let remaining = List.skip 6 bits
+        let version = List.take VersionLength bits |> toInt 0
+        let packetType =
+            bits
+            |> List.skip VersionLength
+            |> List.take TypeLength
+            |> toInt 0
+            |> toPacketType
+        let remaining = List.skip (VersionLength + TypeLength) bits
         match packetType with
         | None ->
             let value, remaining = parseLiteral remaining []
@@ -89,43 +114,60 @@ let rec parsePacket bits parsePackets =
         | Some op ->
             match List.head remaining with
             | On ->
-                let numPackets = toInt (List.take 11 (List.tail remaining)) 0
-                let tail = List.skip 12 remaining
-                let packets, ending = parsePackets tail numPackets []
-                Some (OperatorPacket(version, op, packets)), ending
+                let numPackets =
+                    List.tail remaining
+                    |> List.take NumPacketsLength
+                    |> toInt 0
+                let packets, tail = 
+                    List.skip (NumPacketsLength + 1) remaining
+                    |> parsePackets numPackets []
+                Some (OperatorPacket(version, op, packets)), tail
             | Off ->
-                let bitLength = toInt (List.take 15 (List.tail remaining)) 0
-                let tail = List.skip 16 remaining
-                let subsequence = List.take bitLength tail
-                let packets, _ = parsePackets subsequence -1 []
+                let bitLength = 
+                    List.tail remaining
+                    |> List.take NumBitsLength
+                    |> toInt 0
+                let tail = List.skip (NumBitsLength + 1) remaining
+                let packets, _ = List.take bitLength tail |> parsePackets -1 []
                 Some (OperatorPacket(version, op, packets)), List.skip bitLength tail
     else
         None, []
 
 
-let rec parsePackets bitStream count packets =
+let rec parsePackets count packets bitStream =
     match bitStream, count with
     | _, 0 -> List.rev packets, bitStream
     | _ ->
         let maybePacket, remaining = parsePacket bitStream parsePackets
         match maybePacket with
-        | Some packet -> parsePackets remaining (count - 1) (packet :: packets)
+        | Some packet -> parsePackets (count - 1) (packet :: packets) remaining
         | None -> List.rev packets, remaining
 
 
 let rec part1 packets sum =
     match packets with
     | [] -> sum
-    | LiteralPacket(version, _) :: tail -> part1 tail (sum + version)
-    | OperatorPacket(version, _, subpackets) :: tail -> part1 tail (part1 subpackets (sum + version))
+    | LiteralPacket(version, _) :: tail ->
+        part1 tail (sum + version)
+    | OperatorPacket(version, _, subpackets) :: tail ->
+        part1 tail (part1 subpackets (sum + version))
 
 
-let apply op calculate packets = packets |> calculate |> op
-let compare op calculate packets =
-    match List.take 2 (packets |> calculate) with
+let compare op values =
+    match List.take 2 values with
     | [a; b] when op a b -> 1UL
     | _ -> 0UL
-let product = List.fold (*) 1UL
+
+
+let execute op values =
+    match op with
+    | Sum -> List.sum values
+    | Product -> List.fold (*) 1UL values
+    | Minimum -> List.min values
+    | Maximum -> List.max values
+    | GreaterThan -> compare (>) values
+    | LessThan -> compare (<) values
+    | EqualTo -> compare (=) values
 
 
 let rec calculate packets =
@@ -134,13 +176,8 @@ let rec calculate packets =
     | head :: tail ->
         match head with
         | LiteralPacket(_, value) -> [value] @ calculate tail
-        | OperatorPacket(_, Sum, subpackets) -> [apply List.sum calculate subpackets] @ calculate tail
-        | OperatorPacket(_, Product, subpackets) -> [apply product calculate subpackets] @ calculate tail
-        | OperatorPacket(_, Minimum, subpackets) -> [apply List.min calculate subpackets] @ calculate tail
-        | OperatorPacket(_, Maximum, subpackets) -> [apply List.max calculate subpackets] @ calculate tail
-        | OperatorPacket(_, GreaterThan, subpackets) -> [compare (>) calculate subpackets] @ calculate tail
-        | OperatorPacket(_, LessThan, subpackets) -> [compare (<) calculate subpackets] @ calculate tail
-        | OperatorPacket(_, EqualTo, subpackets) -> [compare (=) calculate subpackets] @ calculate tail
+        | OperatorPacket(_, op, subpackets) -> 
+            [subpackets |> calculate |> execute op] @ calculate tail
 
 
 let part2 packets =
@@ -154,7 +191,7 @@ let main argv =
         |> Seq.toList
         |> List.collect (toBits >> Option.get)
 
-    let packets, _ = parsePackets bitStream -1 []
+    let packets, _ = parsePackets -1 [] bitStream
     printfn "Part 1: %d" (part1 packets 0)
     printfn "Part 2: %d" (part2 packets)
     0
