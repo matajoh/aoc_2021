@@ -11,19 +11,19 @@ let rec parseBeacons sensors beacons lines =
             let beacon = head.Split ','
                         |> Seq.map int
                         |> Array.ofSeq
-            parseBeacons sensors (beacon :: beacons) tail
+            parseBeacons sensors ((beacon.[0], beacon.[1], beacon.[2]) :: beacons) tail
 
 
-let rotate (r : int []) (p : int[]) =
-    [| 
-        r.[0] * p.[0] + r.[1] * p.[1] + r.[2] * p.[2];
-        r.[3] * p.[0] + r.[4] * p.[1] + r.[5] * p.[2];
-        r.[6] * p.[0] + r.[7] * p.[1] + r.[8] * p.[2];
-    |]
+let rotate (m00, m01, m02, m10, m11, m12, m20, m21, m22) (x, y, z) =
+    (
+        m00 * x + m01 * y + m02 * z,
+        m10 * x + m11 * y + m12 * z,
+        m20 * x + m21 * y + m22 * z
+    )
 
 
-let apply op (a : int[]) (b : int[]) =
-    [| op a.[0] b.[0]; op a.[1] b.[1]; op a.[2] b.[2] |]
+let apply op (x0, y0, z0) (x1, y1, z1) =
+    op x0 x1, op y0 y1, op z0 z1
 
 let subtract a b = apply (-) a b
 let add a b = apply (+) a b
@@ -31,30 +31,30 @@ let add a b = apply (+) a b
 
 let Rotations =
     [
-        [|-1;0;0;0;-1;0;0;0;1|];
-        [|0;1;0;-1;0;0;0;0;1|];
-        [|0;0;1;1;0;0;0;1;0|]; 
-        [|0;1;0;1;0;0;0;0;-1|];
-        [|0;-1;0;1;0;0;0;0;1|];
-        [|1;0;0;0;0;1;0;-1;0|];
-        [|0;-1;0;-1;0;0;0;0;-1|];
-        [|0;1;0;0;0;-1;-1;0;0|];
-        [|0;-1;0;0;0;-1;1;0;0|];
-        [|0;0;-1;0;-1;0;-1;0;0|];
-        [|0;0;1;-1;0;0;0;-1;0|];
-        [|0;-1;0;0;0;1;-1;0;0|];
-        [|0;0;-1;-1;0;0;0;1;0|];
-        [|0;0;1;0;-1;0;1;0;0|];
-        [|0;0;1;0;1;0;-1;0;0|];
-        [|-1;0;0;0;0;1;0;1;0|];
-        [|-1;0;0;0;0;-1;0;-1;0|];
-        [|0;0;-1;0;1;0;1;0;0|];
-        [|1;0;0;0;1;0;0;0;1|];
-        [|1;0;0;0;-1;0;0;0;-1|];
-        [|-1;0;0;0;1;0;0;0;-1|];
-        [|1;0;0;0;0;-1;0;1;0|];
-        [|0;1;0;0;0;1;1;0;0|];
-        [|0;0;-1;1;0;0;0;-1;0|];
+        -1,0,0,0,-1,0,0,0,1;
+        0,1,0,-1,0,0,0,0,1;
+        0,0,1,1,0,0,0,1,0;
+        0,1,0,1,0,0,0,0,-1;
+        0,-1,0,1,0,0,0,0,1;
+        1,0,0,0,0,1,0,-1,0;
+        0,-1,0,-1,0,0,0,0,-1;
+        0,1,0,0,0,-1,-1,0,0;
+        0,-1,0,0,0,-1,1,0,0;
+        0,0,-1,0,-1,0,-1,0,0;
+        0,0,1,-1,0,0,0,-1,0;
+        0,-1,0,0,0,1,-1,0,0;
+        0,0,-1,-1,0,0,0,1,0;
+        0,0,1,0,-1,0,1,0,0;
+        0,0,1,0,1,0,-1,0,0;
+        -1,0,0,0,0,1,0,1,0;
+        -1,0,0,0,0,-1,0,-1,0;
+        0,0,-1,0,1,0,1,0,0;
+        1,0,0,0,1,0,0,0,1;
+        1,0,0,0,-1,0,0,0,-1;
+        -1,0,0,0,1,0,0,0,-1;
+        1,0,0,0,0,-1,0,1,0;
+        0,1,0,0,0,1,1,0,0;
+        0,0,-1,1,0,0,0,-1,0;
     ]
 
 
@@ -69,9 +69,8 @@ let rec testTransform beacons counts =
     | [] -> None
     | (a, b) :: tail ->
         let diff = subtract a b
-        let key = diff.[0], diff.[1], diff.[2]
-        let newCounts = Map.change key inc counts
-        if Map.find key newCounts = 12 then
+        let newCounts = Map.change diff inc counts
+        if Map.find diff newCounts = 12 then
             Some diff
         else
             testTransform tail newCounts
@@ -104,18 +103,6 @@ let rec findTransform beacons0 beacons1 rotations =
         | None -> findTransform beacons0 beacons1 tail
 
 
-let toSet (beacons : int [] list) =
-    beacons
-    |> List.map (fun x -> x.[0], x.[1], x.[2])
-    |> Set.ofList
-
-
-let toList beacons =
-    beacons
-    |> Set.toList
-    |> List.map (fun (x, y, z) -> [|x; y; z;|])
- 
-
 let rec findMatch positions beacons =
     match beacons with
     | [] -> positions, [], None
@@ -125,9 +112,9 @@ let rec findMatch positions beacons =
             let newPositions =
                 List.map (rotate R) head
                 |> List.map (add t)
-                |> toSet
-                |> Set.union (toSet positions)
-                |> toList
+                |> Set.ofList
+                |> Set.union (Set.ofList positions)
+                |> Set.toList
             newPositions, tail, Some t
         | None ->
             let newPositions, remain, maybeT = findMatch positions tail
@@ -142,7 +129,9 @@ let rec findPositions positions beacons scanners =
         findPositions newPositions remain (Option.get scanner :: scanners)
 
 
-let manhattan (a, b) = subtract a b |> Array.sumBy abs
+let manhattan (a, b) =
+    let dx, dy, dz = subtract a b
+    (abs dx) + (abs dy) + (abs dz)
 
 
 [<EntryPoint>]
