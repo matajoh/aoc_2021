@@ -1,5 +1,4 @@
 ﻿open System.IO
-open System.Text.RegularExpressions
 
 type Number =
     | Pair of Number * Number
@@ -12,16 +11,14 @@ let rec toString number =
     | Regular value -> sprintf "%d" value
 
 
-let rec parseNumber line =
-    match line with
-    | '[' :: tail ->
-        let left, leftRemain = parseNumber tail
-        let right, rightRemain = parseNumber (List.tail leftRemain)
-        Some(Pair (Option.get left, Option.get right)), List.tail rightRemain
-    | head :: tail ->
-        let value = head.ToString() |> int
-        Some (Regular value), tail
-    | [] -> None, []
+let rec parseNumber index (line: string) =
+    match line.[index] with
+    | '[' ->
+        let left, comma = parseNumber (index + 1) line
+        let right, bracket = parseNumber (comma + 1) line
+        Pair (left, right), bracket + 1
+    | _ ->
+        Regular (line.[index..index] |> int), index + 1
 
 
 let rec addToLeft number extra =
@@ -118,10 +115,8 @@ let part2 numbers =
 let main argv =
     let numbers =
         File.ReadAllLines argv.[0]
-        |> Seq.map (fun o -> o.ToCharArray())
-        |> Seq.map Array.toList
-        |> Seq.map parseNumber
-        |> Seq.map (fst >> Option.get)
+        |> Seq.map (parseNumber 0)
+        |> Seq.map fst
         |> Seq.toList
 
     printfn "Part 1: %d" (part1 numbers)
