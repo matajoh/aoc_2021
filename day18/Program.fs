@@ -35,22 +35,10 @@ let rec addToRight number extra =
 
 let rec explode number nest =
     match number, nest with
-    | Pair (Regular value, Pair (Regular left, Regular right)), 3 ->
-        Some (Pair (Regular (value + left), Regular 0), 0, right)
-    | Pair (Pair (Regular left ,Regular  right), Regular value), 3 ->
-        Some (Pair (Regular 0, Regular (value + right)), left, 0)
     | Pair (Pair (Regular left, Regular right), other), 3 ->
         Some (Pair (Regular 0, addToLeft other right), left, 0)
-    | Pair (Regular value, right), _ ->
-        match explode right (nest + 1) with
-        | Some (exploded, left, right) ->
-            Some (Pair(Regular (left + value), exploded), 0, right)
-        | None -> None
-    | Pair (left, Regular value), _ ->
-        match explode left (nest + 1) with
-        | Some (exploded, left, right) ->
-            Some (Pair(exploded, Regular (right + value)), left, 0)
-        | None -> None
+    | Pair (other, Pair (Regular left, Regular right)), 3 ->
+        Some (Pair (addToRight other left, Regular 0), 0, right)
     | Pair (left, right), _ ->
         match explode left (nest + 1) with
         | Some (exploded, addL, addR) ->
@@ -66,7 +54,7 @@ let rec explode number nest =
 let rec split number =
     match number with
     | Regular value when value > 9 ->
-        let half = value |> float |> (*) 0.5
+        let half = 0.5 * float value
         let left = half |> floor |> int
         let right = half |> ceil |> int
         Some (Pair (Regular left, Regular right))

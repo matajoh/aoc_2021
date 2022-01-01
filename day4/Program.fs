@@ -6,24 +6,19 @@ type Square =
     | Unmarked of value: int
 
 
-let toSquares (line : string) =
+let toSquares row (line : string) =
     line.Split ' '
     |> Array.filter (fun s -> s.Length > 0)
     |> Array.map int
     |> Array.toList
-    |> List.map Unmarked
-
-
-let prependRow (row, squares) =
-    List.mapi (fun col value -> (row, col, value)) squares
+    |> List.mapi (fun col index -> row, col, Unmarked index)
 
 
 let toBoard lines =
     lines
     |> List.skip 1
-    |> List.map toSquares
-    |> List.indexed
-    |> List.collect prependRow
+    |> List.mapi toSquares
+    |> List.concat
 
 
 let rec toBoards lines =
@@ -34,8 +29,8 @@ let rec toBoards lines =
 
 let markSquare mark (row, col, square) =
     match square with
-    | Unmarked value when value = mark -> (row, col, Marked(value))
-    | _ -> (row, col, square)
+    | Unmarked value when value = mark -> row, col, Marked value
+    | _ -> row, col, square
 
 
 let markBoards value boards =
@@ -53,9 +48,9 @@ let addRow sum row =
     |> List.map (fun (a, b) -> a + b)
 
 
-let checkWin (squares : Square list list) =
-    let initSum = List.map markToInt squares.Head
-    let sum = List.fold addRow initSum squares.Tail
+let checkWin squares =
+    let initSum = List.map markToInt (List.head squares)
+    let sum = List.fold addRow initSum (List.tail squares)
     List.exists (fun sum -> sum = 5) sum
 
 

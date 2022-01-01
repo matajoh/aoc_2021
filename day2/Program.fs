@@ -20,16 +20,17 @@ let parseCommand (parts: string array) =
 
 let applyCommand1 pos command =
     match command with
-    | Forward(command) -> { pos with x = pos.x + command }
-    | Down(command) -> { pos with z = pos.z + command }
-    | Up(command) -> { pos with z = pos.z - command }
+    | Forward command -> { pos with x = pos.x + command }
+    | Down command -> { pos with z = pos.z + command }
+    | Up command -> { pos with z = pos.z - command }
 
 
 let applyCommand2 pos command =
     match command with
-    | Forward(command) -> { pos with x = pos.x + command; z = pos.z + command * pos.aim}
-    | Down(command) -> { pos with aim = pos.aim + command }
-    | Up(command) -> { pos with aim = pos.aim - command }
+    | Forward command ->
+        { pos with x = pos.x + command; z = pos.z + command * pos.aim}
+    | Down command -> { pos with aim = pos.aim + command }
+    | Up command -> { pos with aim = pos.aim - command }
 
 
 let move commands applyCommand =
@@ -41,11 +42,10 @@ let move commands applyCommand =
 let main argv =
     let commands = 
         File.ReadLines(argv.[0])
-        |> Seq.map(fun line -> line.Split ' ')
-        |> Seq.map(parseCommand)
-        |> Seq.map(Option.get)
+        |> Seq.map (fun line ->
+            line.Split ' ' |> parseCommand |> Option.get)
         |> Seq.toList
     
-    printfn "Part 1: %i" (move commands applyCommand1)
-    printfn "Part 2: %i" (move commands applyCommand2)
+    printfn "Part 1: %d" (move commands applyCommand1)
+    printfn "Part 2: %d" (move commands applyCommand2)
     0

@@ -150,13 +150,6 @@ let getMoves state =
     |> Seq.toList
 
 
-let isComplete state =
-    Map.toList (toSpaces state)
-    |> List.map (fun (point, amphipod) ->
-        Set.contains point (room state.Expanded amphipod))
-    |> List.fold (&&) true
-
-
 let rec update points start finish =
     match points with
     | [] -> []
@@ -213,14 +206,14 @@ type AStar = {
 }
 
 
-let amphipodScore expanded ((row, col), amphipod) =
-    let spaces =
-        if expanded then
-            Map.find amphipod ExpandedRooms
-        else
-            Map.find amphipod Rooms
+let amphipodScore ((row, col), amphipod) =
+    let roomCol =
+        match amphipod with
+        | A -> 3
+        | B -> 5
+        | C -> 7
+        | D -> 9
 
-    let _, roomCol = Seq.head spaces
     if col = roomCol then
         if row = 1 then 1 else 0
     else
@@ -230,7 +223,7 @@ let amphipodScore expanded ((row, col), amphipod) =
 let heuristic state =
     toSpaces state
     |> Map.toList
-    |> List.sumBy (amphipodScore state.Expanded)
+    |> List.sumBy amphipodScore
 
 
 let updateAStar astar current neighbor score =

@@ -13,8 +13,8 @@ type Selector =
 
 let toBit char =
     match char with
-    | '0' -> Some(Zero)
-    | '1' -> Some(One)
+    | '0' -> Some Zero
+    | '1' -> Some One
     | _ -> None
 
 
@@ -31,9 +31,7 @@ let addBit value bit =
     | One -> (value <<< 1) + 1
 
 
-let bitsToInt bits =
-    bits
-    |> List.fold addBit 0
+let bitsToInt bits = bits |> List.fold addBit 0
 
 
 let toSign bit =
@@ -64,35 +62,32 @@ let part1 report =
     epsilonRate * gammaRate
 
 
-let filterReportByBit selector index (report : Bit list list) =
+let filterReportByBit selector index report =
     let bitCounts =
         report
-        |> List.map (fun o -> o.[index])
+        |> List.map (fun o -> List.item index o)
         |> List.countBy id
         |> Map.ofList
 
     let filterBit =
         match selector with
-        | MostCommon -> if bitCounts.[Zero] > bitCounts.[One] then
-                            Zero 
-                        else if bitCounts.[One] > bitCounts.[Zero] then
-                            One
-                        else
-                            One
-        | LeastCommon -> if bitCounts.[Zero] < bitCounts.[One] then
-                            Zero
-                         else if bitCounts.[One] < bitCounts.[Zero] then
-                            One
-                         else
-                            Zero
+        | MostCommon ->
+            match bitCounts.[Zero] - bitCounts.[One] with
+            | diff when diff > 0 -> Zero
+            | diff when diff < 0 -> One
+            | _ -> One
+        | LeastCommon ->
+            match bitCounts.[Zero] - bitCounts.[One] with
+            | diff when diff > 0 -> One
+            | diff when diff < 0 -> Zero
+            | _ -> Zero
         
-    report
-    |> List.filter (fun o -> o.[index] = filterBit)
+    List.filter (fun o -> (List.item index o) = filterBit) report
 
 
-let rec filterReport selector index (report : Bit list list) =
-    match report.Length with
-    | 1 -> report.Head
+let rec filterReport selector index report =
+    match List.length report with
+    | 1 -> List.head report
     | _ -> report
            |> filterReportByBit selector index
            |> filterReport selector (index + 1)

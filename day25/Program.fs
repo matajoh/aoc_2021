@@ -3,18 +3,21 @@
 type SeaCucumber =
     | East
     | South
+    | Empty
 
 
 let parseCucumber char =
     match char with
-    | '>' -> Some East
-    | 'v' -> Some South
-    | _ -> None
+    | '>' -> East
+    | 'v' -> South
+    | _ -> Empty
+
 
 let eastOf cols (row, col) =
     match col + 1 with
     | east when east = cols -> (row, 0)
     | east -> (row, east)
+
 
 let southOf rows (row, col) =
     match row + 1 with
@@ -22,74 +25,79 @@ let southOf rows (row, col) =
     | south -> (south, col)
 
 
-let moveEast cucumbers cols (point, cucumber) =
+let moveEast cucumbers (point, cucumber) =
+    let cols = Array2D.length2 cucumbers
     match cucumber with
     | East ->
-        let east = eastOf cols point
-        match Map.tryFind east cucumbers with
-        | None -> Some (point, east, cucumber)
-        | Some _ -> None
+        let row, col = eastOf cols point
+        match Array2D.get cucumbers row col with
+        | Empty -> Some (point, (row, col), cucumber)
+        | _ -> None
     | _ -> None
 
 
-let moveSouth cucumbers rows (point, cucumber) =
+let moveSouth cucumbers (point, cucumber) =
+    let rows = Array2D.length1 cucumbers
     match cucumber with
     | South ->
-        let south = southOf rows point
-        match Map.tryFind south cucumbers with
-        | None -> Some (point, south, cucumber)
-        | Some _ -> None
+        let row, col = southOf rows point
+        match Array2D.get cucumbers row col with
+        | Empty -> Some (point, (row, col), cucumber)
+        | _ -> None
     | _ -> None
 
 
-let move cucumbers (start, finish, cucumber) =
-    Map.change start (fun _ -> None) cucumbers
-    |> Map.change finish (fun _ -> Some cucumber)
+let move cucumbers ((row0, col0), (row1, col1), cucumber) =
+    Array2D.set cucumbers row0 col0 Empty
+    Array2D.set cucumbers row1 col1 cucumber
 
 
-let rec simulate cucumbers rows cols steps =
+let enumerate cucumbers =
+    let rows = Array2D.length1 cucumbers
+    let cols = Array2D.length2 cucumbers
+    seq {
+        for row = 0 to rows - 1 do
+            for col = 0 to cols - 1 do
+                match Array2D.get cucumbers row col with
+                | Empty -> ()
+                | cucumber -> yield (row, col), cucumber
+    }
+
+
+let rec simulate cucumbers steps =
     let eastMoves =
-        Map.toList cucumbers
-        |> List.map (moveEast cucumbers cols)
-        |> List.filter Option.isSome
-        |> List.map Option.get
+        enumerate cucumbers
+        |> Seq.map (moveEast cucumbers)
+        |> Seq.filter Option.isSome
+        |> Seq.map Option.get
+        |> Seq.toList
 
-    let eastMoved = List.fold move cucumbers eastMoves
+    List.iter (move cucumbers) eastMoves
 
     let southMoves =
-        Map.toList eastMoved
-        |> List.map (moveSouth eastMoved rows)
-        |> List.filter Option.isSome
-        |> List.map Option.get
+        enumerate cucumbers
+        |> Seq.map (moveSouth cucumbers)
+        |> Seq.filter Option.isSome
+        |> Seq.map Option.get
+        |> Seq.toList
 
-    let newCucumbers = List.fold move eastMoved southMoves
+    List.iter (move cucumbers) southMoves
 
     match List.length eastMoves + List.length southMoves with
     | 0 -> steps
-    | _ -> simulate newCucumbers rows cols (steps + 1)
+    | _ -> simulate cucumbers (steps + 1)
 
 
 [<EntryPoint>]
 let main argv =
-    let seaFloor =
-        File.ReadAllLines argv.[0]
-        |> Seq.mapi (fun row line ->
-            line
-            |> Seq.mapi (fun col char ->
-                (row, col), char)
-            |> Seq.toList)
-        |> Seq.toList
-
-    let rows = List.length seaFloor
-    let cols = List.length (List.head seaFloor)
-
     let cucumbers =
-        seaFloor
-        |> List.concat
-        |> List.map (fun (k, v) -> k, parseCucumber v)
-        |> List.filter (snd >> Option.isSome)
-        |> List.map (fun (k, v) -> k, Option.get v)
-        |> Map.ofList
+        File.ReadAllLines argv.[0]
+        |> Seq.map (fun line ->
+            Seq.map parseCucumber line
+            |> Seq.toList)
 
-    printfn "Part 1: %d" (simulate cucumbers rows cols 1)
+        |> Seq.toList
+        |> array2D
+
+    printfn "Part 1: %d" (simulate cucumbers 1)
     0

@@ -21,20 +21,19 @@ let toDelim char =
 
 let parseDelims line =
     line
-    |> Seq.map toDelim
-    |> Seq.map Option.get
+    |> Seq.map (toDelim >> Option.get)
     |> Seq.toList
 
 
 let rec parseChunks opens line =
     match line with
     | [] -> None, opens
-    | (Close closeDelim) :: tail -> 
+    | Close closeDelim :: tail -> 
         match List.tryHead opens with
         | Some openDelim when openDelim <> closeDelim -> Some closeDelim, opens
         | None -> Some closeDelim, opens
         | _ -> parseChunks (List.tail opens) tail
-    | (Open openDelim) :: tail -> parseChunks (openDelim :: opens) tail
+    | Open openDelim :: tail -> parseChunks (openDelim :: opens) tail
 
 
 let charToScore maybeChar =
@@ -54,7 +53,7 @@ let part1 chunks =
     |> List.sum
 
 
-let rec scoreLine (score : uint64) line =
+let rec scoreLine score line =
     match line with
     | [] -> score
     | ')' :: tail -> scoreLine (score * 5UL + 1UL) tail

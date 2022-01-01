@@ -14,8 +14,7 @@ let getPoints includeDiag vent =
     | Diagonal points -> if includeDiag then points else []
 
 
-let toPoint (vals : int[]) =
-    (vals.[0], vals.[1])
+let toPoint (vals : int[]) = vals.[0], vals.[1]
 
 
 let enumerate x0 x1 =
@@ -27,13 +26,13 @@ let enumerate x0 x1 =
 
 let horizontal x0 x1 y =
     enumerate x0 x1
-    |> List.map (fun x -> (x, y))
+    |> List.map (fun x -> x, y)
     |> Horizontal
 
 
 let vertical x y0 y1 =
     enumerate y0 y1
-    |> List.map (fun y -> (x, y))
+    |> List.map (fun y -> x, y)
     |> Vertical
 
 
@@ -46,7 +45,7 @@ let toVent (line : string) =
     let parts = line.Split ' '
     let (x0, y0) = parts.[0].Split ',' |> Array.map int |> toPoint
     let (x1, y1) = parts.[2].Split ',' |> Array.map int |> toPoint
-    let diffs = (x1 - x0, y1 - y0)
+    let diffs = x1 - x0, y1 - y0
     match diffs with
     | (_, 0) -> horizontal x0 x1 y0
     | (0, _) -> vertical x0 y0 y1

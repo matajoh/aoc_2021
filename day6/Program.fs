@@ -4,24 +4,14 @@ open System.IO
 let step (timeToSpawn, count) = (timeToSpawn - 1, count)
 
 let grow (fish : uint64 array) =
-    [|
-        fish.[1];
-        fish.[2];
-        fish.[3];
-        fish.[4];
-        fish.[5];
-        fish.[6];
-        fish.[7] + fish.[0];
-        fish.[8];
-        fish.[0]
-    |]
+    [| fish.[1]; fish.[2]; fish.[3]; fish.[4]; fish.[5];
+       fish.[6]; fish.[7] + fish.[0]; fish.[8]; fish.[0] |]
 
 
 let rec simulate numDays fish =
-    if numDays = 0 then
-        Array.sum fish
-    else
-        simulate (numDays - 1) (grow fish)   
+    match numDays with
+    | 0 -> Array.sum fish
+    | _ -> simulate (numDays - 1) (grow fish)   
 
 
 [<EntryPoint>]

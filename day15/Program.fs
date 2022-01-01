@@ -14,7 +14,8 @@ let tryGet array (row, col) =
     | (row, col) -> Some (Array2D.get array row col)
 
 
-let neighbors (row, col) = [row - 1, col; row + 1, col; row, col + 1; row, col - 1]
+let neighbors (row, col) =
+    [row - 1, col; row + 1, col; row, col + 1; row, col - 1]
 
 
 let enumeratePoints array =
@@ -43,7 +44,7 @@ type AStar = {
 }
 
 
-let updateAStar astar current neighbor score =
+let updateAStar astar neighbor score =
     let gScore = Map.change neighbor (fun _ -> Some score) astar.GScore
     let openSet = 
         if not (Set.contains neighbor astar.OpenSet) then
@@ -52,7 +53,7 @@ let updateAStar astar current neighbor score =
         else
             astar.OpenSet
 
-    { astar with GScore=gScore; OpenSet=openSet}
+    { astar with GScore=gScore; OpenSet=openSet }
 
 
 let rec addNeighbors astar current neighbors =
@@ -64,7 +65,7 @@ let rec addNeighbors astar current neighbors =
             let tentativeGScore = (Map.find current astar.GScore) + distance
             let gScore = getScore astar.GScore neighbor
             if tentativeGScore < gScore then
-                let newAStar = updateAStar astar current neighbor tentativeGScore
+                let newAStar = updateAStar astar neighbor tentativeGScore
                 addNeighbors newAStar current tail
             else
                 addNeighbors astar current tail

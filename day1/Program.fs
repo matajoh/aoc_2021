@@ -12,16 +12,14 @@ let part1 (values : int List) =
 
 
 let part2 (values : int List) =
-    List.windowed 3 values
-        |> List.map(List.sum)
-        |> part1
+    List.windowed 3 values |> List.map List.sum |> part1
 
 
 [<EntryPoint>]
 let main argv =
     let values = 
         File.ReadLines(argv.[0])
-        |> Seq.map(int)
+        |> Seq.map int
         |> Seq.toList
     printfn "Part 1: %i" (part1 values)
     printfn "Part 2: %i" (part2 values)

@@ -12,7 +12,8 @@ let tryGet array (row, col) =
     | (row, col) -> Some (Array2D.get array row col)
 
 
-let neighbors row col = [row - 1, col; row + 1, col; row, col + 1; row, col - 1]
+let neighbors row col =
+    [row - 1, col; row + 1, col; row, col + 1; row, col - 1]
 
 
 let isLower depths queryDepth point =

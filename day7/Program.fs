@@ -9,7 +9,8 @@ let fuelFor2 position crab =
     ((fuel + 1) * fuel) / 2
     
 
-let totalFuelFor crabs fuelFor position = List.sumBy (fuelFor position) crabs
+let totalFuelFor crabs fuelFor position =
+    List.sumBy (fuelFor position) crabs
 
 
 let findMinFuel crabs fuelFor =
@@ -22,7 +23,7 @@ let findMinFuel crabs fuelFor =
 let main argv =
     let crabs =
         File.ReadAllText(argv.[0]).Split ','
-        |> Seq.map(int)
+        |> Seq.map int
         |> Seq.sort
         |> Seq.toList
 
